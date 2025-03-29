@@ -1,3 +1,11 @@
+# Ignore CSV dataset files
+data/release_train_patients.csv
+data/release_test_patients.csv
+data/release_validate_patients.csv
+
+# If you have other large files or data artifacts, add them here:
+# data/*.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
