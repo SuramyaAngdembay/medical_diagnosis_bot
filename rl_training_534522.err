@@ -1,0 +1,41 @@
+
+CondaError: Run 'conda init' before 'conda activate'
+
+wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
+wandb: Tracking run with wandb version 0.19.8
+wandb: W&B syncing is set to `offline` in this directory.  
+wandb: Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+Traceback (most recent call last):
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/rl_model/main.py", line 427, in <module>
+    main()
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/rl_model/main.py", line 50, in main
+    env = environment(args, args.train_data_path, train=True)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/rl_model/env.py", line 80, in __init__
+    ] = load_csv(self.filepath)
+        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/rl_model/sim_utils.py", line 338, in load_csv
+    df1 = pd.read_csv(filepath, sep=",")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/homes/01/srangdembay/miniconda3/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 1026, in read_csv
+    return _read(filepath_or_buffer, kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/homes/01/srangdembay/miniconda3/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 620, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/homes/01/srangdembay/miniconda3/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 1620, in __init__
+    self._engine = self._make_engine(f, self.engine)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/homes/01/srangdembay/miniconda3/lib/python3.12/site-packages/pandas/io/parsers/readers.py", line 1880, in _make_engine
+    self.handles = get_handle(
+                   ^^^^^^^^^^^
+  File "/homes/01/srangdembay/miniconda3/lib/python3.12/site-packages/pandas/io/common.py", line 794, in get_handle
+    handle = _BytesZipFile(
+             ^^^^^^^^^^^^^^
+  File "/homes/01/srangdembay/miniconda3/lib/python3.12/site-packages/pandas/io/common.py", line 1037, in __init__
+    self.buffer: zipfile.ZipFile = zipfile.ZipFile(  # type: ignore[assignment]
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/homes/01/srangdembay/miniconda3/lib/python3.12/zipfile/__init__.py", line 1321, in __init__
+    self.fp = io.open(file, filemode)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/homes/01/srangdembay/Hack/medical_diagnosis_bot/data/release_train_patients.zip'
