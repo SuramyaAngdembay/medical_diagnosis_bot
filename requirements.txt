@@ -2,11 +2,16 @@
 flask==3.0.2
 flask-cors==4.0.0
 
-# Machine Learning & Scientific Computing          # For RL model
+# Machine Learning & Scientific Computing
 numpy==1.26.4          # Required by multiple components
 scipy==1.12.0          # For entropy calculations
-pandas==2.2.1          # For data processing in sim_utils.py
+pandas==2.2.1          # For data processing
+scikit-learn==1.3.0    # For metrics and data processing
 tqdm==4.66.0           # For progress bars in RL model
+
+# PyTorch & Deep Learning
+torch==2.6.0           # For RL model
+torchvision==0.21.0    # Required by torch
 
 # AI/LLM Integration
 google-generativeai==0.3.2  # For Gemini integration
@@ -17,3 +22,9 @@ python-dotenv==1.0.1   # For loading environment variables
 # Utilities
 typing-extensions==4.10.0  # For type hints
 pathlib==1.0.1         # For file path handling
+logging==0.4.9.6       # For logging
+jsonify==0.5           # For JSON processing
+matplotlib==3.8.0      # For plotting during model development
+
+# Uncomment for model training with wandb (not required for application)
+# wandb==0.19.8          # For experiment tracking
