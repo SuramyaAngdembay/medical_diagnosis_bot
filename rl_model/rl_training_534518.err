@@ -1,0 +1,4 @@
+
+CondaError: Run 'conda init' before 'conda activate'
+
+python: can't open file '/homes/01/srangdembay/Hack/medical_diagnosis_bot/rl_model/rl_model/main.py': [Errno 2] No such file or directory

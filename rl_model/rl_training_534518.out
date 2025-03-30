@@ -1,0 +1,6 @@
+Starting RL training job...
+Base directory: /homes/01/srangdembay/Hack/medical_diagnosis_bot/rl_model
+Data directory: /homes/01/srangdembay/Hack/medical_diagnosis_bot/rl_model/data
+RL model directory: /homes/01/srangdembay/Hack/medical_diagnosis_bot/rl_model/rl_model
+Output directory: /homes/01/srangdembay/Hack/medical_diagnosis_bot/rl_model/rl_model/output
+Job completed
