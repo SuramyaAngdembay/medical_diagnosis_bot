@@ -1,22 +1,80 @@
-from flask import Flask, request, jsonify
-from chatbot import ChatbotEngine
 import logging
+import os
+import sys
+import torch
+from flask import Flask, request, jsonify
+from dotenv import load_dotenv
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Add parent directory to path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
+from .chatbot import ChatbotEngine
+from .data_processor import DataProcessor
+from .gemini_client import GeminiClient
+from rl_model.agent import Policy_Gradient_pair_model  # Import the RL agent class
+
+load_dotenv()
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+# Initialize components
+evidence_path = os.path.join(parent_dir, "data/release_evidences.json")
 try:
-    chatbot = ChatbotEngine('data/release_evidences.json')
-    logger.info("Chatbot initialized successfully")
+    data_processor = DataProcessor(evidence_path)
+    logger.info("Data processor initialized successfully")
 except Exception as e:
-    logger.error(f"Failed to initialize chatbot: {str(e)}")
+    logger.error(f"Failed to initialize components: {str(e)}")
     raise
+
+gemini_client = GeminiClient()
+
+# RL Agent Loading and Chatbot Initialization
+rl_agent = None
+chatbot = None  # Initialize chatbot as None
+try:
+    # Get dimensions from data processor
+    state_size = data_processor.get_state_size()
+    disease_size = data_processor.get_disease_count()
+    symptom_size = data_processor.get_symptom_count()
+
+    logger.info(f"Initializing RL agent with dimensions: state={state_size}, disease={disease_size}, symptom={symptom_size}")
+
+    # Model hyperparameters (from training)
+    learning_rate = 1e-4
+    gamma = 0.99
+    eta = 0.01
+
+    # Initialize model
+    rl_agent = Policy_Gradient_pair_model(state_size, disease_size, symptom_size, LR=learning_rate, Gamma=gamma, Eta=eta)
+
+    # Load pre-trained weights if available
+    model_dir = os.path.join('rl_model', 'output')
+    policy_checkpoint_path = os.path.join(model_dir, 'best_policy_casande_1_1.0_2.826_1.pth')
+    classifier_checkpoint_path = os.path.join(model_dir, 'best_classifier_casande_1_1.0_2.826_1.pth')
+
+    if os.path.exists(policy_checkpoint_path) and os.path.exists(classifier_checkpoint_path):
+        # Load weights with correct device mapping
+        device = rl_agent.device  # Use the device from RL agent
+        rl_agent.policy.load_state_dict(torch.load(policy_checkpoint_path, map_location=device))
+        rl_agent.classifier.load_state_dict(torch.load(classifier_checkpoint_path, map_location=device))
+        logger.info(f"Pre-trained RL Agent loaded successfully on {device}")
+    else:
+        logger.warning(f"Pre-trained RL Agent weights not found in {model_dir}. Starting with untrained model.")
+
+    # Initialize chatbot with RL agent *only if rl_agent loaded successfully*
+    chatbot = ChatbotEngine(evidence_path, rl_agent=rl_agent)
+    logger.info("Chatbot initialized with RL agent")
+
+except Exception as e:
+    logger.error(f"Failed to load RL Agent: {e}")
+    rl_agent = None  # Ensure rl_agent is None if loading fails
+    # Initialize chatbot without RL agent as fallback
+    chatbot = ChatbotEngine(evidence_path)
+    logger.warning("Chatbot initialized without RL agent - will use fallback question selection")
 
 @app.route("/")
 def home():
@@ -40,18 +98,23 @@ def start_session():
 def get_question():
     """Get the next question to ask the user."""
     try:
-        if chatbot.selector is None:
+        # Start session if not already started
+        if not hasattr(chatbot, 'answers'):
             chatbot.start_session()
 
         code, question_data = chatbot.ask_next()
         if code is None:
             if question_data and "error" in question_data:
+                logger.warning(f"Error getting question: {question_data['error']}")
                 return jsonify(question_data), 400
             return jsonify({
                 "message": "Diagnosis complete or confidence reached",
                 "status": "complete"
             })
+            
+        logger.info(f"Selected question {code}: {question_data.get('question', '')}")
         return jsonify({"code": code, **question_data})
+        
     except Exception as e:
         logger.error(f"Error getting question: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -60,7 +123,7 @@ def get_question():
 def submit_answer():
     """Submit a user's answer to a question."""
     try:
-        if chatbot.selector is None:
+        if not hasattr(chatbot, 'answers'):
             return jsonify({
                 "error": "Session not started. Please call /start first."
             }), 400
@@ -68,10 +131,10 @@ def submit_answer():
         data = request.get_json()
         if not data:
             return jsonify({"error": "No JSON data provided"}), 400
-            
+
         code = data.get("code")
         user_input = data.get("answer")
-        
+
         if not code or not user_input:
             return jsonify({
                 "error": "Missing code or answer in request"
@@ -88,7 +151,56 @@ def submit_answer():
 @app.route("/confidence", methods=["GET"])
 def get_confidence():
     """Get the current diagnosis confidence levels."""
-    # Get current confidence level once model is implementeds!
+    try:
+        if not hasattr(chatbot, 'answers'):
+            return jsonify({
+                "error": "Session not started. Please call /start first."
+            }), 400
+
+        if rl_agent is None:
+            return jsonify({
+                "error": "RL model not loaded properly"
+            }), 500
+
+        # Get current state from chatbot
+        current_state = chatbot.get_current_state()
+        
+        # Convert to tensor and move to correct device
+        state_tensor = torch.FloatTensor(current_state).unsqueeze(0).to(rl_agent.device)
+
+        # Get diagnosis probabilities
+        with torch.no_grad():
+            diagnosis_logits = rl_agent.classifier(state_tensor)
+            diagnosis_probs = torch.softmax(diagnosis_logits, dim=1)
+
+        # Convert to list and get top diagnoses
+        diagnosis_probs = diagnosis_probs[0].cpu().numpy()
+        top_indices = diagnosis_probs.argsort()[-5:][::-1]  # Get top 5 diagnoses
+        
+        # Get disease names and create response
+        diseases = data_processor.get_disease_names()
+        confidence_levels = [{
+            "disease": diseases[idx],
+            "confidence": float(diagnosis_probs[idx])
+        } for idx in top_indices]
+
+        return jsonify({
+            "confidence_levels": confidence_levels,
+            "status": "success"
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting confidence levels: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+def main():
+    # Set up logging
+    logging.basicConfig(level=logging.INFO)
+    
+    # Start Flask server
+    port = int(os.environ.get("PORT", 5000))
+    logger.info(f"Starting server on port {port}")
+    app.run(host="0.0.0.0", port=port, debug=True)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    main()

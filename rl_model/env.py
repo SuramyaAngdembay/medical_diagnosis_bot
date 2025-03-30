@@ -6,7 +6,7 @@ import numpy as np
 
 from scipy.stats import entropy
 
-from sim_utils import (
+from .sim_utils import (
     encode_age,
     encode_ethnicity,
     encode_geo,
