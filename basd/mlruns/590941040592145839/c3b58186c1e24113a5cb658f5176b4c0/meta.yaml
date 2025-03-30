@@ -1,0 +1,15 @@
+artifact_uri: file:///homes/01/srangdembay/Hack/medical_diagnosis_bot/basd/mlruns/590941040592145839/c3b58186c1e24113a5cb658f5176b4c0/artifacts
+end_time: 1743319978792
+entry_point_name: ''
+experiment_id: '590941040592145839'
+lifecycle_stage: active
+run_id: c3b58186c1e24113a5cb658f5176b4c0
+run_name: entertaining-pig-373
+run_uuid: c3b58186c1e24113a5cb658f5176b4c0
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1743317185428
+status: 3
+tags: []
+user_id: srangdembay

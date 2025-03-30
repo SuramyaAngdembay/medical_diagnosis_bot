@@ -1,0 +1,18 @@
+2025/03/29 22:59:21 INFO mlflow.tracking.fluent: Experiment with name 'ASD' does not exist. Creating a new experiment.
+Traceback (most recent call last):
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/basd/main.py", line 212, in <module>
+    main()
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/basd/main.py", line 175, in main
+    run(args)
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/basd/main.py", line 204, in run
+    asd_train(args=args)
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/basd/asd.py", line 721, in asd_train
+    agent = create_agent(args)
+            ^^^^^^^^^^^^^^^^^^
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/basd/asd.py", line 653, in create_agent
+    model = ASDMLP(
+            ^^^^^^^
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/basd/asd_model.py", line 17, in __init__
+    self.llm_input_size = llm_input_size
+                          ^^^^^^^^^^^^^^
+NameError: name 'llm_input_size' is not defined

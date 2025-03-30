@@ -72,7 +72,15 @@ class ASDPatientInteractionSimulator(environment):
         return symptoms, antecedents, binary_symptoms, initial_symptom
 
     def sample(self, alist, num):
-        return random.sample(alist, num)
+        if not alist:
+            # Use a "safe" common symptom ID instead of a special value
+            SAFE_COMMON_SYMPTOM_ID = 3  # Choose an ID that exists and is relatively neutral
+            return [SAFE_COMMON_SYMPTOM_ID] if num > 1 else SAFE_COMMON_SYMPTOM_ID
+        
+        # Normal case - convert if needed and sample
+        if isinstance(alist, (dict, set)):
+            alist = sorted(alist)
+        return random.sample(alist, num) if len(alist) >= num else alist
 
     def set_frame_val(self, frame, index, pres_s, evidences, interaction_length):
         target_state = self.cached_patients[index]['tgt_state']

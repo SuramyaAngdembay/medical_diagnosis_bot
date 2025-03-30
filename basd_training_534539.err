@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/basd/main.py", line 10, in <module>
+    from asd import asd_train
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/basd/asd.py", line 16, in <module>
+    from orion.client import report_results
+ModuleNotFoundError: No module named 'orion'

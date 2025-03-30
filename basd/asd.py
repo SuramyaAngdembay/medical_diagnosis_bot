@@ -13,7 +13,7 @@ from tqdm import tqdm
 from asd_model import ASDMLP
 from dataset import ASDPatientInteractionSimulator, SimPaDatasetTrain as SimPaDataset
 
-from orion.client import report_results
+
 
 
 BEST_PRETRAIN_MODEL_NAME = "asd_best_model_params.pkl"
@@ -643,7 +643,8 @@ def asd_classifier(agent, optimizer, train_ds, eval_ds, args):
             f"{best_performance}."
         )
         value = float(best_performance) if func_metric == "loss" else -float(best_performance)
-        report_results([dict(name="dev_metric", type="objective", value=value)])
+        mlflow.log_metric("final_dev_metric", value)  # Log to MLflow instead
+        print(f"Final validation metric: {value}")    # Console feedback
     # import pdb;pdb.set_trace()
 
 

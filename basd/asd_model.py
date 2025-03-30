@@ -14,7 +14,7 @@ class ASDMLP(nn.Module):
     ):
         super(ASDMLP, self).__init__()
 
-        self.llm_input_size = llm_input_size
+        # self.llm_input_size = llm_input_size
 
         self.fc_net = [nn.Linear(inp_size, hidden_sizes[0])]
         for size_idx in range(1, len(hidden_sizes)):
@@ -30,10 +30,10 @@ class ASDMLP(nn.Module):
             else nn.Linear(hidden_sizes[-1], patho_size)
         )
 
-    def process_llm_input(self, llm_input):
-        """Process LLM input through the model"""
-        x_sym, x_ag = self.convert_llm_input(llm_input)
-        return self.forward(x_sym, x_ag)
+    # def process_llm_input(self, llm_input):
+    #     """Process LLM input through the model"""
+    #     x_sym, x_ag = self.convert_llm_input(llm_input)
+    #     return self.forward(x_sym, x_ag)
 
     def forward(self, x_sym, x_ag):
         # add hidden layer, with relu activation function

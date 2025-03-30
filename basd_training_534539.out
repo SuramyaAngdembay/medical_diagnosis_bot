@@ -1,0 +1,10 @@
+Setting wandb to offline mode. Logs will be stored locally.
+Starting BASD training job...
+Base directory: /homes/01/srangdembay/Hack/medical_diagnosis_bot
+Data directory: /homes/01/srangdembay/Hack/medical_diagnosis_bot/data
+BASD directory: /homes/01/srangdembay/Hack/medical_diagnosis_bot/basd
+Output directory: /homes/01/srangdembay/Hack/medical_diagnosis_bot/basd/output
+Wandb directory: /homes/01/srangdembay/Hack/medical_diagnosis_bot/wandb
+Job completed
+Wandb offline logs saved to: /homes/01/srangdembay/Hack/medical_diagnosis_bot/wandb
+To sync these logs later, run: wandb sync /homes/01/srangdembay/Hack/medical_diagnosis_bot/wandb/offline-run-*
