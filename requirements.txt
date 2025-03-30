@@ -1,30 +1,60 @@
 # Core Backend
-flask==3.0.2
-flask-cors==4.0.0
+flask==3.0.2             # Web server framework
+flask-cors==4.0.0        # Cross-origin resource sharing support
+gunicorn==23.0.0         # WSGI HTTP server for production deployment
 
 # Machine Learning & Scientific Computing
-numpy==1.26.4          # Required by multiple components
-scipy==1.12.0          # For entropy calculations
-pandas==2.2.1          # For data processing
-scikit-learn==1.3.0    # For metrics and data processing
-tqdm==4.66.0           # For progress bars in RL model
+numpy==1.26.4            # Numerical computing
+scipy==1.12.0            # Scientific computing and entropy calculations
+pandas==2.2.1            # Data processing and analysis
+scikit-learn==1.3.0      # Machine learning algorithms
+tqdm==4.66.0             # Progress bars for model training
 
 # PyTorch & Deep Learning
-torch==2.6.0           # For RL model
-torchvision==0.21.0    # Required by torch
+torch==2.6.0             # Deep learning framework
+torchvision==0.21.0      # Computer vision extensions for PyTorch
+triton==3.2.0            # GPU programming for PyTorch
 
 # AI/LLM Integration
-google-generativeai==0.3.2  # For Gemini integration
+google-generativeai==0.3.2  # For Gemini API integration
 
 # Environment & Configuration
-python-dotenv==1.0.1   # For loading environment variables
+python-dotenv==1.0.1     # Environment variable management
+packaging==24.2          # Utilities for version handling
+platformdirs==4.3.7      # Platform-specific directories
+
+# Data Processing & Visualization
+matplotlib==3.8.0        # Plotting and data visualization
+contourpy==1.3.1         # Calculations for contour plots
+cycler==0.12.1           # Composable style cycles
+fonttools==4.56.0        # Font handling
+kiwisolver==1.4.8        # Fast implementation of the Cassowary constraint solver
+pillow==11.1.0           # Image processing
+pyparsing==3.2.3         # Parsing utilities
+plotly==6.0.1            # Interactive plotting library
+python-dateutil==2.9.0.post0  # Extensions to the standard datetime module
+pytz==2025.2             # Timezone library
+kaleido==0.2.1           # Static image export for plotly
 
 # Utilities
-typing-extensions==4.10.0  # For type hints
-pathlib==1.0.1         # For file path handling
-logging==0.4.9.6       # For logging
-jsonify==0.5           # For JSON processing
-matplotlib==3.8.0      # For plotting during model development
+typing-extensions==4.10.0  # Type hints backport
+pathlib==1.0.1           # Object-oriented filesystem paths
+jinja2==3.1.6            # Template engine
+MarkupSafe==3.0.2        # String handling for Jinja2
+joblib==1.4.2            # Lightweight pipelining in Python
+threadpoolctl==3.6.0     # Thread pool control
+six==1.17.0              # Python 2-3 compatibility
+requests==2.32.3         # HTTP requests
+certifi==2025.1.31       # Root certificates for validating SSL
+charset-normalizer==3.4.1  # Unicode normalization
+idna==3.10               # Internationalized Domain Names
+urllib3==2.3.0           # HTTP client
+PyYAML==6.0.2            # YAML parser and emitter
 
-# Uncomment for model training with wandb (not required for application)
-# wandb==0.19.8          # For experiment tracking
+# Optional - Development & Testing (uncomment as needed)
+# pytest==8.3.5           # Testing framework
+# wandb==0.19.8           # Experiment tracking
+# filelock==3.18.0        # File locking mechanism
+# networkx==3.4.2         # Network creation and analysis
+# sympy==1.13.1           # Symbolic mathematics
+# tabulate==0.9.0         # Pretty-print tabular data
