@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Diagnosis Chatbot</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Medical Diagnosis Bot</h2>
+        </div>
+        <div class="chat-box" id="chat-box">
+            <!-- Chat messages will appear here -->
+            <div class="message bot-message">
+                <p>Welcome! Please provide your age and sex to start.</p>
+            </div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="user-input" placeholder="Enter your age and sex (e.g., '30 male')">
+            <button id="send-button">Send</button>
+        </div>
+        <div class="diagnosis-confidence" id="confidence-box" style="display: none;">
+            <h3>Diagnosis Confidence</h3>
+            <ul id="confidence-list"></ul>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html> 

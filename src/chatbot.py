@@ -1,7 +1,7 @@
-from .data_processor import EvidenceLoader, DataProcessor
-from .question_selector import QuestionSelector
-from .diagnosis_model import MockModel
-from .gemini_client import GeminiClient
+from src.data_processor import EvidenceLoader, DataProcessor
+from src.question_selector import QuestionSelector
+from src.diagnosis_model import MockModel
+from src.Gemini_client import GeminiClient
 import logging
 import numpy as np
 import torch
@@ -86,6 +86,16 @@ class ChatbotEngine:
         self.demographics["turn"] = self.turn_count
         return self.data_processor.get_state_from_answers(self.answers, self.demographics)
         
+    def get_rl_compatible_state(self) -> np.ndarray:
+        """Get the current state vector in a format compatible with the RL model."""
+        # Get the regular state first
+        state = self.get_current_state()
+        
+        # Convert it to the format expected by the RL model
+        if hasattr(self.data_processor, 'convert_to_rl_model_state'):
+            return self.data_processor.convert_to_rl_model_state(state)
+        return state
+        
     def process_answer(self, evidence_code: str, value: any) -> bool:
         """Process an answer from the user.
         
@@ -119,16 +129,17 @@ class ChatbotEngine:
             
             if self.rl_agent:
                 try:
-                    # Get current state with demographics
-                    current_state = self.get_current_state()
+                    # Get current state converted to format compatible with RL model
+                    current_state = self.get_rl_compatible_state()
                     
                     # Use RL agent to select next question
                     action = self.rl_agent.choose_action_s(current_state.reshape(1, -1))
                     if isinstance(action, np.ndarray):
                         action = action[0]  # Get scalar from array
                         
-                    # Convert action to evidence code
-                    evidence_codes = self.data_processor.evidence_codes
+                    # Get evidence codes from data processor's symptom_name_2_index attribute
+                    evidence_codes = list(self.data_processor.symptom_name_2_index.keys())
+                    
                     if 0 <= action < len(evidence_codes):
                         next_evidence = evidence_codes[action]
                         # Check if already asked
@@ -162,7 +173,7 @@ class ChatbotEngine:
         """
         if self.rl_agent:
             try:
-                current_state = self.get_current_state()
+                current_state = self.get_rl_compatible_state()
                 diagnosis_idx, probabilities = self.rl_agent.choose_diagnosis(current_state.reshape(1, -1))
                 if isinstance(diagnosis_idx, np.ndarray):
                     diagnosis_idx = diagnosis_idx[0]

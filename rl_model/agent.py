@@ -114,6 +114,8 @@ class sym_acquire_func(nn.Module):
     """docstring for Net"""
     def __init__(self, state_size, action_size):
         super(sym_acquire_func, self).__init__()
+        
+        # Adapt first layer to match state_size (could be 241 or 922)
         self.fc1 = nn.Linear(state_size, 1024*2)
         self.fc2 = nn.Linear(1024*2, 2048*1)
         self.fc3 = nn.Linear(2048*1, 1024*2)
@@ -149,12 +151,22 @@ class diagnosis_func(nn.Module):
 
 class Policy_Gradient_pair_model(object):
     def __init__(self, state_size, disease_size, symptom_size, LR = 1e-4, Gamma = 0.99, Eta = 0.01):
-
-        self.policy = sym_acquire_func(state_size, symptom_size)
-        self.classifier = diagnosis_func(state_size, disease_size)
+        self.original_state_size = state_size  # Store the original state size (241)
+        
+        # For loading the model, we'll use the state size from the trained model (922)
+        self.trained_state_size = 922
+        
+        # Create models with the trained state size for loading weights
+        self.policy = sym_acquire_func(self.trained_state_size, symptom_size)
+        self.classifier = diagnosis_func(self.trained_state_size, disease_size)
+        
         self.lr = LR
-        self.policy.cuda(CUDA_device)
-        self.classifier.cuda(CUDA_device)
+        
+        # Check if CUDA is available
+        self.device = torch.device("cuda:" + str(CUDA_device) if torch.cuda.is_available() else "cpu")
+        self.policy.to(self.device)
+        self.classifier.to(self.device)
+        
         self.optimizer_p = torch.optim.Adam(self.policy.parameters(), lr=LR/5)
         self.optimizer_c = torch.optim.Adam(self.classifier.parameters(), lr=LR)
         self.counter = 1
@@ -162,6 +174,25 @@ class Policy_Gradient_pair_model(object):
         # hyper_params
         self.gamma = Gamma
         self.eta = Eta
+        
+    def convert_state(self, state):
+        """Convert from original state size (241) to trained state size (922)."""
+        # If state is already the right size, return it
+        if state.shape[-1] == self.trained_state_size:
+            return state
+            
+        # Otherwise, pad with zeros to match the trained state size
+        if len(state.shape) == 1:
+            # Single state vector
+            expanded_state = np.zeros(self.trained_state_size, dtype=np.float32)
+            expanded_state[:min(state.shape[0], self.trained_state_size)] = state[:min(state.shape[0], self.trained_state_size)]
+            return expanded_state
+        else:
+            # Batch of state vectors
+            batch_size = state.shape[0]
+            expanded_states = np.zeros((batch_size, self.trained_state_size), dtype=np.float32)
+            expanded_states[:, :min(state.shape[1], self.trained_state_size)] = state[:, :min(state.shape[1], self.trained_state_size)]
+            return expanded_states
 
     def create_batch(self, states, rewards_s, action_s, true_d, true_diff_ind, true_diff_prob):
         
@@ -206,33 +237,51 @@ class Policy_Gradient_pair_model(object):
     def choose_action_s(self, state, deterministic=False):
 
         self.policy.eval()
-        state = torch.from_numpy(state).float()
-        probs = self.policy.forward(state.cuda(CUDA_device))
+        state = torch.from_numpy(self.convert_state(state)).float()
+        probs = self.policy.forward(state.to(self.device))
         m = Categorical(probs)
         if not deterministic:
             action = m.sample().detach().cpu().squeeze().numpy()
         else:
-            action = torch.max(probs, dim = 1)[1].detach().cpu().squeeze().numpy()
-
+            action = torch.max(probs, dim=1)[1].detach().cpu().squeeze().numpy()
+            
+        # Handle the case when action is a scalar (0-dim array)
+        if np.isscalar(action) or (isinstance(action, np.ndarray) and action.ndim == 0):
+            action = np.array([int(action)])
+            
         return action
     
     @torch.no_grad()
     def choose_diagnosis(self, state):
 
         self.classifier.eval()
-        state = torch.from_numpy(state).float()
-        output = self.classifier.forward(state.cuda(CUDA_device)).detach().cpu().squeeze()
-
-        return torch.max(output, dim = 1)[1].numpy(), torch.softmax(output, dim = 1).numpy()
+        state = torch.from_numpy(self.convert_state(state)).float()
+        output = self.classifier.forward(state.to(self.device)).detach().cpu().squeeze()
+        
+        # Handle the case when output is a single vector (not a batch)
+        if output.dim() == 1:
+            # Add batch dimension for processing
+            output = output.unsqueeze(0)
+            
+        # Get diagnosis and probabilities
+        diagnosis = torch.max(output, dim=1)[1].numpy()
+        probabilities = torch.softmax(output, dim=1).numpy()
+        
+        # Handle scalar output case
+        if diagnosis.ndim == 0:
+            diagnosis = np.array([int(diagnosis)])
+        
+        return diagnosis, probabilities
     
     def update_param_rl(self):  
 
         self.policy.train() 
         self.optimizer_p.zero_grad()
-        state_tensor = self.batch_states.cuda(CUDA_device)
-        reward_tensor = self.batch_rewards_s.cuda(CUDA_device)
-        action_s_tensor = self.batch_action_s.cuda(CUDA_device)
-        prob_tensor = self.policy.forward(state_tensor)
+        # Convert batch states to trained model size
+        converted_states = torch.from_numpy(self.convert_state(self.batch_states.cpu().numpy())).float().to(self.device)
+        reward_tensor = self.batch_rewards_s.to(self.device)
+        action_s_tensor = self.batch_action_s.to(self.device)
+        prob_tensor = self.policy.forward(converted_states)
         #Policy Loss
         m = Categorical(prob_tensor)
         log_prob_tensor = m.log_prob(action_s_tensor)
@@ -249,17 +298,18 @@ class Policy_Gradient_pair_model(object):
 
         self.classifier.train()
         self.optimizer_c.zero_grad()
-        state_tensor = self.batch_states.cuda(CUDA_device)
-        label_tensor = self.batch_true_d.cuda(CUDA_device)
+        # Convert batch states to trained model size
+        converted_states = torch.from_numpy(self.convert_state(self.batch_states.cpu().numpy())).float().to(self.device)
+        label_tensor = self.batch_true_d.to(self.device)
         diff_ind_tensor = (
             None if self.batch_true_diff_ind is None
-            else self.batch_true_diff_ind.cuda(CUDA_device)
+            else self.batch_true_diff_ind.to(self.device)
         )
         diff_prob_tensor = (
             None if self.batch_true_diff_prob is None
-            else self.batch_true_diff_prob.cuda(CUDA_device)
+            else self.batch_true_diff_prob.to(self.device)
         )
-        output_tensor = self.classifier.forward(state_tensor)
+        output_tensor = self.classifier.forward(converted_states)
         if diff_ind_tensor is None or diff_prob_tensor is None:
             loss = self.cross_entropy(output_tensor, label_tensor)
         else:
@@ -285,8 +335,8 @@ class Policy_Gradient_pair_model(object):
        
     def load_model(self, args, prefix=""):
         info = str(args.dataset) + '_' + str(args.threshold) + '_' + str(args.mu) + '_' + str(args.nu) + '_' + str(args.trail)
-        self.policy.load_state_dict(torch.load(os.path.join(args.checkpoint_dir, f"{prefix}policy_{info}.pth"), map_location='cuda:0'))
-        self.classifier.load_state_dict(torch.load(os.path.join(args.checkpoint_dir, f"{prefix}classifier_{info}.pth"), map_location='cuda:0'))
+        self.policy.load_state_dict(torch.load(os.path.join(args.checkpoint_dir, f"{prefix}policy_{info}.pth"), map_location=self.device))
+        self.classifier.load_state_dict(torch.load(os.path.join(args.checkpoint_dir, f"{prefix}classifier_{info}.pth"), map_location=self.device))
 
 
     def train(self):
@@ -296,4 +346,35 @@ class Policy_Gradient_pair_model(object):
     def eval(self):
         self.policy.eval()
         self.classifier.eval()
+        
+    def predict(self, answers):
+        """Compatibility method for QuestionSelector.
+        
+        Args:
+            answers: Dictionary of evidence code to answer value
+            
+        Returns:
+            Dict: Mapping of condition indices to probabilities
+        """
+        # Convert answers to state vector (we need to implement this)
+        # For now, return a uniform distribution over all diseases
+        import numpy as np
+        disease_size = self.classifier.out.out_features
+        probs = np.ones(disease_size) / disease_size
+        return {i: prob for i, prob in enumerate(probs)}
+        
+    def predict_d_prob(self, state, temperature=None):
+        """This is a helper function to directly get the diagnosis probabilities."""
+        self.classifier.eval()
+        # Convert state to trained model size
+        converted_state = torch.from_numpy(self.convert_state(np.array([state]))).float().to(self.device)
+        
+        with torch.no_grad():
+            out = self.classifier.forward(converted_state)
+            if temperature is not None:
+                # Apply temperature scaling
+                out = out / temperature
+            probs = F.softmax(out, dim=1)
+        
+        return probs[0].cpu().numpy()
         

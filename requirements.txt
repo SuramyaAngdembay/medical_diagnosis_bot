@@ -2,8 +2,7 @@
 flask==3.0.2
 flask-cors==4.0.0
 
-# Machine Learning & Scientific Computing
-torch==2.2.1           # For RL model
+# Machine Learning & Scientific Computing          # For RL model
 numpy==1.26.4          # Required by multiple components
 scipy==1.12.0          # For entropy calculations
 pandas==2.2.1          # For data processing in sim_utils.py

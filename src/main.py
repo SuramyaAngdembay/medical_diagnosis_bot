@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 import torch
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from dotenv import load_dotenv
 
 # Add parent directory to path
@@ -10,16 +10,18 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
-from .chatbot import ChatbotEngine
-from .data_processor import DataProcessor
-from .gemini_client import GeminiClient
+# Change relative imports to absolute imports
+from src.chatbot import ChatbotEngine
+from src.data_processor import DataProcessor
+from src.Gemini_client import GeminiClient  # Note the capital G in Gemini_client
 from rl_model.agent import Policy_Gradient_pair_model  # Import the RL agent class
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+# Specify template_folder and static_folder
+app = Flask(__name__, template_folder=os.path.join(parent_dir, 'templates'), static_folder=os.path.join(parent_dir, 'static'))
 
 # Initialize components
 evidence_path = os.path.join(parent_dir, "data/release_evidences.json")
@@ -59,9 +61,12 @@ try:
     if os.path.exists(policy_checkpoint_path) and os.path.exists(classifier_checkpoint_path):
         # Load weights with correct device mapping
         device = rl_agent.device  # Use the device from RL agent
-        rl_agent.policy.load_state_dict(torch.load(policy_checkpoint_path, map_location=device))
-        rl_agent.classifier.load_state_dict(torch.load(classifier_checkpoint_path, map_location=device))
-        logger.info(f"Pre-trained RL Agent loaded successfully on {device}")
+        try:
+            rl_agent.policy.load_state_dict(torch.load(policy_checkpoint_path, map_location=device))
+            rl_agent.classifier.load_state_dict(torch.load(classifier_checkpoint_path, map_location=device))
+            logger.info(f"Pre-trained RL Agent loaded successfully on {device}")
+        except Exception as e:
+            logger.warning(f"Error loading model weights: {e}. Starting with untrained model.")
     else:
         logger.warning(f"Pre-trained RL Agent weights not found in {model_dir}. Starting with untrained model.")
 
@@ -78,11 +83,13 @@ except Exception as e:
 
 @app.route("/")
 def home():
-    """Welcome endpoint."""
-    return jsonify({
-        "message": "Welcome to the Medical Diagnosis Chatbot!",
-        "status": "running"
-    })
+    """Serve the main chatbot HTML page."""
+    return render_template('index.html')
+
+# Add route to serve static files (CSS, JS)
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory(app.static_folder, filename)
 
 @app.route("/start", methods=["POST"])
 def start_session():
@@ -163,7 +170,7 @@ def get_confidence():
             }), 500
 
         # Get current state from chatbot
-        current_state = chatbot.get_current_state()
+        current_state = chatbot.get_rl_compatible_state()
         
         # Convert to tensor and move to correct device
         state_tensor = torch.FloatTensor(current_state).unsqueeze(0).to(rl_agent.device)

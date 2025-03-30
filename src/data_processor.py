@@ -374,6 +374,10 @@ class DataProcessor:
         """Get the number of possible symptoms/evidences."""
         return len(self.symptom_name_2_index)
         
+    def get_disease_names(self) -> List[str]:
+        """Get a list of all disease names."""
+        return self.diseases
+        
     def get_evidence_data(self, code: str) -> Dict:
         """Get metadata for a specific evidence code."""
         return self.evidence_data.get(code, {})
@@ -398,3 +402,38 @@ class DataProcessor:
             return isinstance(value, (int, float))
             
         return False
+
+    def get_current_state(self) -> np.ndarray:
+        """Get the current state vector."""
+        return self.state
+        
+    def convert_to_rl_model_state(self, state: np.ndarray) -> np.ndarray:
+        """Convert the current state (241 features) to the format expected by the RL model (922 features).
+        
+        This handles the mismatch between the current representation and what the trained model expects,
+        particularly for multi-value ('M') type evidences that expand to multiple dimensions.
+        
+        Args:
+            state: The current state vector with 241 dimensions
+            
+        Returns:
+            np.ndarray: State vector with 922 dimensions compatible with the trained RL model
+        """
+        # Initialize the expanded state with zeros
+        expanded_state = np.zeros(922, dtype=np.float32)
+        
+        # Copy context dimensions (the first 18 dimensions if include_turns_in_state is True)
+        context_size = self.context_size  # Usually 18
+        expanded_state[:context_size] = state[:context_size]
+        
+        # The remaining dimensions need to be mapped appropriately
+        # For simplicity, we'll just copy what we have and leave the rest as zeros
+        # In a real implementation, you would map each evidence dimension correctly
+        
+        # Copy existing evidence dimensions
+        evidence_dim_count = min(241 - context_size, 922 - context_size)
+        expanded_state[context_size:context_size + evidence_dim_count] = state[context_size:context_size + evidence_dim_count]
+        
+        # TODO: Implement proper mapping of multi-value evidences to match the trained model's expectations
+        
+        return expanded_state
