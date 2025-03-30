@@ -10,7 +10,6 @@ from tqdm import tqdm
 from scipy.stats import entropy
 import argparse
 
-from orion.client import report_results
 
 try:
   import wandb 
@@ -205,7 +204,12 @@ def main():
                 val_result = test(agent=agent, threshold=threshold, log_flag=True)
                 best_val_accuracy = val_result["epoch_accuracy/validation"]
 
-    report_results([dict(name="dev_metric", type="objective", value=-float(best_val_accuracy))])
+    print(f"Final validation metric: {best_val_accuracy}")
+    if wandb_flag:
+        wandb.log({"final_validation_metric": best_val_accuracy})
+    elif mlflow_flag:
+        mlflow.log_metric("final_validation_metric", best_val_accuracy)
+
 
 @torch.no_grad()
 def test(agent=None, threshold=None, epoch=0, env=None, log_flag=False):
@@ -415,7 +419,7 @@ if __name__ == '__main__':
         # add save_dir
         if args.date_time_suffix:
             args.save_dir = os.path.join(args.save_dir, time_stamp)
-        os.makedirs(args.save_dir)
+        os.makedirs(args.save_dir, exist_ok=True)  # Won't raise error if dir exists
 
     init_logging(time_stamp, args)
     

@@ -1,0 +1,11 @@
+
+CondaError: Run 'conda init' before 'conda activate'
+
+Traceback (most recent call last):
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/rl_model/main.py", line 2, in <module>
+    from agent import *
+  File "/homes/01/srangdembay/Hack/medical_diagnosis_bot/rl_model/agent.py", line 1, in <module>
+    import torch
+  File "/homes/01/srangdembay/miniconda3/envs/pytorch_env_2/lib/python3.9/site-packages/torch/__init__.py", line 367, in <module>
+    from torch._C import *  # noqa: F403
+ImportError: /usr/lib64/libm.so.6: version `GLIBC_2.27' not found (required by /homes/01/srangdembay/miniconda3/envs/pytorch_env_2/lib/python3.9/site-packages/torch/lib/../../../../libcurand.so.10)
