@@ -24,7 +24,7 @@ except:
 
 def init_logging(time_stamp, args):
     if wandb_flag:
-        wandb.init(name=time_stamp, group="aarlc", project="medical_evidence_collection")
+        wandb.init(name=time_stamp, group="rl_model", project="medical_diagnosis_bot")
         wandb.config.update(args)
     elif mlflow_flag:
         mlflow.set_experiment(experiment_name=args.exp_name)
