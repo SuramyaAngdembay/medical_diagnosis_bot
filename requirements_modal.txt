@@ -78,4 +78,4 @@ typing-inspection==0.4.0
 typing_extensions==4.13.0
 tzdata==2025.2
 urllib3==2.3.0
-wandb==0.19.8
+wandb==1.19.8
