@@ -46,7 +46,7 @@ def main():
                         help='Batch size for testing')
     parser.add_argument('--num_batches', type=int, default=5,
                         help='Number of batches to test')
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
     
     # Create a namespace that matches the training environment
     class Args:
