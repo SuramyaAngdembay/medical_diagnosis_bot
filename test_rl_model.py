@@ -18,7 +18,7 @@ def main():
     parser = argparse.ArgumentParser(description='Test the RL model')
     parser.add_argument('--model_path', type=str, default='rl_model/output/best_policy_casande_1.0_1.0_2.826_1.pth',
                         help='Path to the trained model')
-    parser.add_argument('--threshold_path', type=str, default='rl_model/output/threshold_changing_curve_casande_1_1.0_2.826_1.pkl',
+    parser.add_argument('--threshold_path', type=str, default='rl_model/output/threshold_changing_curve_casande_1.0_1.0_2.826_1.pkl',
                         help='Path to the threshold file')
     parser.add_argument('--test_data_path', type=str, default='data/release_test_patients.zip',
                         help='Path to the test data')
