@@ -62,11 +62,11 @@ def test(args):
     env_args = Args(args)
     env = environment(env_args, args.test_data_path)
     
-    # Initialize model
+    # Initialize model with correct dimensions from environment
     model = Policy_Gradient_pair_model(
-        state_size=env.observation_space.shape[0],
-        disease_size=env.action_space.n,
-        symptom_size=env.action_space.n
+        state_size=env.num_features,  # Using num_features for state size
+        disease_size=env.num_symptoms,  # Using num_symptoms for disease size
+        symptom_size=env.num_symptoms  # Using num_symptoms for symptom size
     )
     
     # Load model weights
