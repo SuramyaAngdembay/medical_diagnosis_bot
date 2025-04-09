@@ -18,12 +18,17 @@ BASE_DIR="$PWD"
 DATA_DIR="$BASE_DIR/data"
 RL_MODEL_DIR="$BASE_DIR/rl_model"
 OUTPUT_DIR="$RL_MODEL_DIR/output"
+OUTPUT_TEST_DIR="$RL_MODEL_DIR/output_test"
+
+# Create output_test directory if it doesn't exist
+mkdir -p $OUTPUT_TEST_DIR
 
 echo "Starting RL testing job..."
 echo "Base directory: $BASE_DIR"
 echo "Data directory: $DATA_DIR"
 echo "RL model directory: $RL_MODEL_DIR"
 echo "Output directory: $OUTPUT_DIR"
+echo "Test results directory: $OUTPUT_TEST_DIR"
 
 # Move to the RL model directory
 cd $RL_MODEL_DIR
@@ -42,7 +47,7 @@ python test.py \
     --trail 1 \
     --batch_size 500 \
     --MAXSTEP 30 \
-    --save_dir "$OUTPUT_DIR"
+    --save_dir "$OUTPUT_TEST_DIR"
 
 # Report job completion
 echo "Job completed" 

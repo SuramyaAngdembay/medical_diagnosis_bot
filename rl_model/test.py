@@ -34,8 +34,8 @@ def parse_args():
                       help='Batch size for testing')
     parser.add_argument('--MAXSTEP', type=int, default=30,
                       help='Maximum steps per episode')
-    parser.add_argument('--save_dir', type=str, default='output',
-                      help='Directory to save results')
+    parser.add_argument('--save_dir', type=str, default='output_test',
+                      help='Directory to save test results')
     return parser.parse_args()
 
 class Args:
@@ -157,12 +157,24 @@ def test(args):
     print(f"Average Steps: {avg_steps:.2f}")
     print(f"Average Reward: {avg_reward:.2f}")
     
+    # Create output_test directory if it doesn't exist
+    os.makedirs(args.save_dir, exist_ok=True)
+    
     # Save results
     results = {
         'accuracy': avg_accuracy,
         'avg_steps': avg_steps,
         'avg_reward': avg_reward,
-        'num_episodes': num_episodes
+        'num_episodes': num_episodes,
+        'test_parameters': {
+            'dataset': args.dataset,
+            'threshold': args.threshold,
+            'mu': args.mu,
+            'nu': args.nu,
+            'trail': args.trail,
+            'batch_size': args.batch_size,
+            'MAXSTEP': args.MAXSTEP
+        }
     }
     
     results_path = os.path.join(args.save_dir, f"test_results_{args.dataset}_{args.trail}.pkl")

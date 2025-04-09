@@ -6,13 +6,13 @@ import numpy as np
 
 from scipy.stats import entropy
 
-from .sim_utils import (
+from sim_utils import (
+    load_and_check_data,
     encode_age,
+    encode_sex,
+    encode_race,
     encode_ethnicity,
     encode_geo,
-    encode_race,
-    encode_sex,
-    load_and_check_data,
     load_csv,
 )
 
