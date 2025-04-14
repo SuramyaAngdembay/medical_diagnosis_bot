@@ -3,7 +3,7 @@
 data/release_train_patients.csv
 data/release_test_patients.csv
 data/release_validate_patients.csv
-
+basd/output/asd_best_model_params.pkl
 # If you have other large files or data artifacts, add them here:
 data/*.csv
 data/*.zip
